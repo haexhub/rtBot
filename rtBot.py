@@ -1,11 +1,11 @@
+from binance import AsyncClient, DepthCacheManager, BinanceSocketManager
+from dotenv import dotenv_values
+from enum import Enum
+from random import randint
 import asyncio
 import json
 import re
-from enum import Enum
 import time
-from random import randint
-from binance import AsyncClient, DepthCacheManager, BinanceSocketManager
-from dotenv import dotenv_values
 
 config = dotenv_values(".env")
 
@@ -74,8 +74,8 @@ class rtBot:
     def createTakeProfitOrder(self, order={}):
         rtOrder = self.isRtOrder(order)
         if (not rtOrder or
-                not float(order.get("price")) or
-                rtOrder.groups()[0] != rtSide.OPEN.name
+                    not float(order.get("price")) or
+                    rtOrder.groups()[0] != rtSide.OPEN.name
                 ):
             return False
 
@@ -108,7 +108,7 @@ class rtBot:
                 nextOrders.append({
                     "newClientOrderId": self.createOrderId(rtSide.OPEN.name),
                     "quantity": 20,
-                    "price": round(price - self.takeProfitAmount * iteration, 4),
+                    "price": round(round(price, 4) - self.takeProfitAmount * iteration, 4),
                     "side": orderSide.BUY.name,
                     "symbol": self.symbol,
                     "timeInForce": timeInForce.GTC.name,
@@ -135,8 +135,8 @@ class rtBot:
             rtCheckOrder = self.isRtOrder(checkOrder)
 
             if (rtCheckOrder and
-                    rtOrder.groups()[0] == rtSide.CLOSE.name and
-                    rtOrder.groups()[1] == rtCheckOrder.groups()[1]
+                        rtOrder.groups()[0] == rtSide.CLOSE.name and
+                        rtOrder.groups()[1] == rtCheckOrder.groups()[1]
                     ):
                 return True
 
