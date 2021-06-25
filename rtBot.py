@@ -74,9 +74,9 @@ class rtBot:
     def createTakeProfitOrder(self, order={}):
         rtOrder = self.isRtOrder(order)
         if (not rtOrder or
-                    not float(order.get("price")) or
-                    rtOrder.groups()[0] != rtSide.OPEN.name
-                ):
+                not float(order.get("price")) or
+                rtOrder.groups()[0] != rtSide.OPEN.name
+            ):
             return False
 
         newClientOrderId = self.createOrderId(
@@ -135,9 +135,9 @@ class rtBot:
             rtCheckOrder = self.isRtOrder(checkOrder)
 
             if (rtCheckOrder and
-                        rtOrder.groups()[0] == rtSide.CLOSE.name and
-                        rtOrder.groups()[1] == rtCheckOrder.groups()[1]
-                    ):
+                    rtOrder.groups()[0] == rtSide.CLOSE.name and
+                    rtOrder.groups()[1] == rtCheckOrder.groups()[1]
+                ):
                 return True
 
         return False
@@ -181,6 +181,11 @@ class rtBot:
 
         return False
 
+    def printOrders(self, orders=[{}]):
+        for order in orders:
+            print(order.get("clientOrderId"), order.get("price"),
+                  order.get("side"), order.get("status"))
+
     def setOrders(self, orders=[]):
         self.orders.update(all=orders)
         self.orders.update(filled=[])
@@ -196,10 +201,10 @@ class rtBot:
                 self.orders.get("new").append(order)
 
             if (isRtOrder and
-                (order.get("status") == orderStatus.FILLED.name or
+                        (order.get("status") == orderStatus.FILLED.name or
                          order.get("status") == "NEW"
                          )
-                ):
+                    ):
                 self.orders.get("rt").append(order)
 
     async def setTakeProfitOrders(self):
@@ -247,6 +252,7 @@ class rtBot:
                         timeInForce=newOrder.get("timeInForce"),
                         type=newOrder.get("type")
                     )
+                    self.printOrders(orders=self.orders.get("new"))
 
     async def syncOrders(self, symbol="BUSDUSDT"):
         try:
