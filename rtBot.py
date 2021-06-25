@@ -49,7 +49,9 @@ class timeInForce(Enum):
 class rtBot:
     """Range Trading Bot"""
 
-    def __init__(self, symbol="BUSDUSDT"):
+    def __init__(self, symbol="BUSDUSDT", baseAsset="BUSD", quoteAsset="USDT"):
+        self.baseAsset = baseAsset
+        self.quoteAsset = quoteAsset
         self.binance = None
         self.accountInfo = None
         self.orderIdPrefix = "RT1"
@@ -225,34 +227,51 @@ class rtBot:
                     type=takeProfitOrder.get("type"))
 
     async def startTrading(self):
-        avgPrice = await self.binance.get_avg_price(symbol=self.symbol)
-        syncedOrders = await self.syncOrders()
-        price = float(avgPrice.get("price"))
 
-        if (syncedOrders):
-            print("price", price)
-            await self.setTakeProfitOrders()
-            nextOrders = self.determinNewRtOrders(price)
-            # print("next orders", nextOrders)
+        try:
+            syncedOrders = await self.syncOrders()
 
-            for newOrder in nextOrders:
-                takeProfitOrder = self.createTakeProfitOrder(newOrder)
+            if (syncedOrders):
+                avgPrice = await self.binance.get_avg_price(symbol=self.symbol)
+                price = float(avgPrice.get("price"))
+                print("price", price)
+                await self.setTakeProfitOrders()
+                nextOrders = self.determinNewRtOrders(price)
+                # print("next orders", nextOrders)
+                balanceBaseAsset = await self.binance.get_asset_balance(asset=self.baseAsset)
+                balanceQuoteAsset = await self.binance.get_asset_balance(asset=self.quoteAsset)
 
-                """ print("order", newOrder)
-                print("takeProfit", takeProfitOrder) """
-                if (not self.isRtOrderAlreadyOpen(newOrder) and
-                        not self.isRtOrderAlreadyOpen(takeProfitOrder)):
-                    print("open new order", newOrder)
-                    await self.binance.create_order(
-                        newClientOrderId=newOrder.get("newClientOrderId"),
-                        price=newOrder.get("price"),
-                        quantity=newOrder.get("quantity"),
-                        side=newOrder.get("side"),
-                        symbol=newOrder.get("symbol"),
-                        timeInForce=newOrder.get("timeInForce"),
-                        type=newOrder.get("type")
-                    )
-                    self.printOrders(orders=self.orders.get("new"))
+                for newOrder in nextOrders:
+                    takeProfitOrder = self.createTakeProfitOrder(newOrder)
+
+                    """ print("order", newOrder)
+                    print("takeProfit", takeProfitOrder) """
+                    if (not self.isRtOrderAlreadyOpen(newOrder) and
+                            not self.isRtOrderAlreadyOpen(takeProfitOrder)):
+
+                        balance = balanceQuoteAsset if newOrder.get(
+                            "side") == orderSide.BUY.name else balanceBaseAsset
+
+                        if (float(balance.get("free")) > float(newOrder.get("quantity"))):
+
+                            print("open new order", newOrder,  balance.get(
+                                "free"), newOrder.get("quantity"), balance.get("asset"))
+                            await self.binance.create_order(
+                                newClientOrderId=newOrder.get(
+                                    "newClientOrderId"),
+                                price=newOrder.get("price"),
+                                quantity=newOrder.get("quantity"),
+                                side=newOrder.get("side"),
+                                symbol=newOrder.get("symbol"),
+                                timeInForce=newOrder.get("timeInForce"),
+                                type=newOrder.get("type")
+                            )
+                        else:
+                            print("NICHT GENUG GELD!!!")
+
+                        self.printOrders(orders=self.orders.get("new"))
+        except:
+            print("Fehler beim Trading")
 
     async def syncOrders(self, symbol="BUSDUSDT"):
         try:
@@ -270,17 +289,18 @@ async def main():
     await bot.initBinance(config.get("api_key"), config.get("api_secret"))
     print(dir(bot))
 
+    await bot.syncOrders(symbol=bot.symbol)
     run = True
 
     while run:
         await bot.startTrading()
         time.sleep(10)
 
-    await bot.syncOrders(symbol=bot.symbol)
     newOrders = bot.orders.get("new")
     for order in newOrders:
         print(order.get("clientOrderId"), order.get("price"),
               order.get("status"), order.get("side"))
+
     await bot.binance.close_connection()
 
 
