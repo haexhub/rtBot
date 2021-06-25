@@ -172,7 +172,6 @@ class rtBot:
             ):
                 return True
 
-            # print("compare", rtOrder, checkOrder)
             if (rtOrder.get("status") == "NEW" and
                 float(rtOrder.get("origQty")) == float(checkOrder.get("quantity")) and
                 float(rtOrder.get("price")) == float(checkOrder.get("price")) and
@@ -239,7 +238,7 @@ class rtBot:
                 if (not self.isRtOrderAlreadyOpen(newOrder) and
                         not self.isRtOrderAlreadyOpen(takeProfitOrder)):
                     print("open new order", newOrder)
-                    """ await self.binance.create_order(
+                    await self.binance.create_order(
                         newClientOrderId=newOrder.get("newClientOrderId"),
                         price=newOrder.get("price"),
                         quantity=newOrder.get("quantity"),
@@ -247,7 +246,7 @@ class rtBot:
                         symbol=newOrder.get("symbol"),
                         timeInForce=newOrder.get("timeInForce"),
                         type=newOrder.get("type")
-                    )"""
+                    )
         time.sleep(10)
         await self.startTrading()
 
