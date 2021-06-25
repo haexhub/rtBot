@@ -74,9 +74,9 @@ class rtBot:
     def createTakeProfitOrder(self, order={}):
         rtOrder = self.isRtOrder(order)
         if (not rtOrder or
-                not float(order.get("price")) or
-                rtOrder.groups()[0] != rtSide.OPEN.name
-            ):
+                    not float(order.get("price")) or
+                    rtOrder.groups()[0] != rtSide.OPEN.name
+                ):
             return False
 
         newClientOrderId = self.createOrderId(
@@ -135,9 +135,9 @@ class rtBot:
             rtCheckOrder = self.isRtOrder(checkOrder)
 
             if (rtCheckOrder and
-                    rtOrder.groups()[0] == rtSide.CLOSE.name and
-                    rtOrder.groups()[1] == rtCheckOrder.groups()[1]
-                ):
+                        rtOrder.groups()[0] == rtSide.CLOSE.name and
+                        rtOrder.groups()[1] == rtCheckOrder.groups()[1]
+                    ):
                 return True
 
         return False
@@ -196,10 +196,10 @@ class rtBot:
                 self.orders.get("new").append(order)
 
             if (isRtOrder and
-                        (order.get("status") == orderStatus.FILLED.name or
+                (order.get("status") == orderStatus.FILLED.name or
                          order.get("status") == "NEW"
                          )
-                    ):
+                ):
                 self.orders.get("rt").append(order)
 
     async def setTakeProfitOrders(self):
@@ -247,8 +247,6 @@ class rtBot:
                         timeInForce=newOrder.get("timeInForce"),
                         type=newOrder.get("type")
                     )
-        time.sleep(10)
-        await self.startTrading()
 
     async def syncOrders(self, symbol="BUSDUSDT"):
         try:
@@ -265,7 +263,18 @@ async def main():
     bot = rtBot("BUSDUSDT")
     await bot.initBinance(config.get("api_key"), config.get("api_secret"))
     print(dir(bot))
-    await bot.startTrading()
+
+    run = True
+
+    while run:
+        await bot.startTrading()
+        time.sleep(10)
+
+    await bot.syncOrders(symbol=bot.symbol)
+    newOrders = bot.orders.get("new")
+    for order in newOrders:
+        print(order.get("clientOrderId"), order.get("price"),
+              order.get("status"), order.get("side"))
     await bot.binance.close_connection()
 
     # run some simple requests
