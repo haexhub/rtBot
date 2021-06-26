@@ -104,11 +104,11 @@ class rtBot:
         }
 
     def determinNewRtOrders(self, price=0, maxOrders=2):
-        iteration = 1
+        iteration = 0
         nextOrders = []
 
         if price < 1 and price > self.lowerBound:
-            while iteration <= maxOrders:
+            while iteration < maxOrders:
                 nextOrders.append({
                     "newClientOrderId": self.createOrderId(rtSide.OPEN.name),
                     "quantity": 20,
@@ -122,7 +122,7 @@ class rtBot:
 
         elif price > 1 and price < self.upperBound:
 
-            while iteration <= maxOrders:
+            while iteration < maxOrders:
                 nextOrders.append({
                     "newClientOrderId": self.createOrderId(rtSide.OPEN.name),
                     "quantity": 20,
