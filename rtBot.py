@@ -266,7 +266,7 @@ class rtBot:
 
                         print("open new order", newOrder,  balance.get(
                             "free"), newOrder.get("quantity"), balance.get("asset"))
-                        # await self.placeOrder(order=newOrder)
+                        await self.placeOrder(order=newOrder)
 
                     else:
                         print("NICHT GENUG GELD!!!")
