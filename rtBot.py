@@ -1,4 +1,4 @@
-from binance import AsyncClient, DepthCacheManager, BinanceSocketManager
+from binance.client import AsyncClient
 from dotenv import dotenv_values
 from enum import Enum
 from random import randint
@@ -266,7 +266,7 @@ class rtBot:
 
                         print("open new order", newOrder,  balance.get(
                             "free"), newOrder.get("quantity"), balance.get("asset"))
-                        await self.placeOrder(order=newOrder)
+                        # await self.placeOrder(order=newOrder)
 
                     else:
                         print("NICHT GENUG GELD!!!")
