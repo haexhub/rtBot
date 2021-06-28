@@ -2,6 +2,8 @@ from binance.client import AsyncClient
 from dotenv import dotenv_values
 from enum import Enum
 from random import randint
+from rethinkdb import r
+from rethinkdb.errors import RqlRuntimeError, RqlDriverError
 import asyncio
 import json
 import re
@@ -51,6 +53,9 @@ class rtBot:
 
     def __init__(self, symbol="BUSDUSDT", baseAsset="BUSD", quoteAsset="USDT", lowerBound=0.9990, upperBound=1.0010):
         self.accountInfo = None
+        self.apiKey = config.get("api_key")
+        self.apiSecret = config.get("api_secret")
+        self.assets = {}
         self.baseAsset = baseAsset
         self.binance = None
         self.lowerBound = lowerBound
@@ -62,6 +67,9 @@ class rtBot:
             "rt": []
         }
         self.quoteAsset = quoteAsset
+        self.rdbHost = config.get("rdbHost") or "localhost"
+        self.rdbPort = config.get("rdbPort") or 28015
+        self.rtTable = config.get("rdbTable") or "rtBot"
         self.symbol = symbol
         self.takeProfitAmount = 0.0001
         self.upperBound = upperBound
@@ -78,8 +86,8 @@ class rtBot:
     def createTakeProfitOrder(self, order={}):
         rtOrder = self.isRtOrder(order)
         if (not rtOrder or
-                not float(order.get("price")) or
-                rtOrder.groups()[0] != rtSide.OPEN.name
+                    not float(order.get("price")) or
+                    rtOrder.groups()[0] != rtSide.OPEN.name
                 ):
             return False
 
@@ -141,15 +149,15 @@ class rtBot:
             rtCheckOrder = self.isRtOrder(checkOrder)
 
             if (rtCheckOrder and
-                    rtOrder.groups()[0] == rtSide.CLOSE.name and
-                    rtOrder.groups()[1] == rtCheckOrder.groups()[1]
+                        rtOrder.groups()[0] == rtSide.CLOSE.name and
+                        rtOrder.groups()[1] == rtCheckOrder.groups()[1]
                     ):
                 return True
 
         return False
 
-    async def initBinance(self, api_key, api_secret):
-        self.binance = await AsyncClient.create(api_key, api_secret)
+    def setupRdb(self):
+        self.rdbConnection = r.connect(host=self.rdbHost)
 
     def isRtOrder(self, order={}):
         # print("search 4", order)
@@ -223,11 +231,20 @@ class rtBot:
                 self.orders.get("new").append(order)
 
             if (isRtOrder and
-                    (order.get("status") == orderStatus.FILLED.name or
-                     order.get("status") == "NEW"
-                     )
+                (order.get("status") == orderStatus.FILLED.name or
+                         order.get("status") == "NEW"
+                         )
                 ):
                 self.orders.get("rt").append(order)
+
+    def setRdbConnection(self, host):
+        self.rdbConnection = r.connect(host=self.rdbHost, port=self.rdbPort)
+        try:
+            r.db_create(self.rtTable).run(self.rdbConnection)
+        except RqlRuntimeError:
+            print 'App database already exists. Run the app without --setup.'
+        finally:
+            self.rdbConnection.close()
 
     async def setTakeProfitOrders(self):
         for order in self.orders.get("rt"):
@@ -239,8 +256,11 @@ class rtBot:
                 self.printOrders(orders=self.orders.get("new"))
 
     async def startTrading(self):
+
         try:
-            if not await self.syncOrders():
+            if not self.binance:
+                self.binance = await AsyncClient.create(self.apiKey, self.apiSecret)
+            if not await self.syncOrders() or not self.binance:
                 return False
 
             avgPrice = await self.binance.get_avg_price(symbol=self.symbol)
@@ -277,6 +297,9 @@ class rtBot:
             print("Fehler beim Trading")
             return False
 
+    async def syncBalance(self, asset=""):
+        self.assets[asset] = await self.binance.get_asset_balance(asset=self.baseAsset)
+
     async def syncOrders(self, symbol="BUSDUSDT"):
         try:
             allOrders = await self.binance.get_all_orders(symbol=symbol)
@@ -290,11 +313,7 @@ class rtBot:
 async def main():
     # initialise the client
     bot = rtBot("BUSDUSDT")
-    await bot.initBinance(config.get("api_key"), config.get("api_secret"))
-    print(dir(bot))
 
-    await bot.syncOrders(symbol=bot.symbol)
-    bot.printOrders(orders=bot.orders.get("new"))
     run = True
 
     while run:
