@@ -2,8 +2,6 @@ from binance.client import AsyncClient
 from dotenv import dotenv_values
 from enum import Enum
 from random import randint
-from rethinkdb import r
-from rethinkdb.errors import RqlRuntimeError, RqlDriverError
 import asyncio
 import json
 import re
