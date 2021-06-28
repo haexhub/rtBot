@@ -155,7 +155,8 @@ class rtBot:
         return False
 
     def setupRdb(self):
-        self.rdbConnection = r.connect(host=self.rdbHost)
+        pass
+        #self.rdbConnection = r.connect(host=self.rdbHost)
 
     def isRtOrder(self, order={}):
         # print("search 4", order)
@@ -236,13 +237,14 @@ class rtBot:
                 self.orders.get("rt").append(order)
 
     def setRdbConnection(self, host):
-        self.rdbConnection = r.connect(host=self.rdbHost, port=self.rdbPort)
+        pass
+        """ self.rdbConnection = r.connect(host=self.rdbHost, port=self.rdbPort)
         try:
             r.db_create(self.rtTable).run(self.rdbConnection)
         except RqlRuntimeError:
             print 'App database already exists. Run the app without --setup.'
         finally:
-            self.rdbConnection.close()
+            self.rdbConnection.close() """
 
     async def setTakeProfitOrders(self):
         for order in self.orders.get("rt"):
