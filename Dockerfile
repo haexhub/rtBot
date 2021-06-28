@@ -1,9 +1,9 @@
-FROM python:3
+FROM python:3.9.1
 
 # RUN useradd -ms /bin/bash docker
 # ENV VIRTUAL_ENV=/opt/venv
 # ENV PATH=”$VIRTUAL_ENV/bin:$PATH”
-
+RUN apt-get update
 WORKDIR /usr/src/app
 
 COPY . .

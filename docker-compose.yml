@@ -1,6 +1,8 @@
-version: '3'
+version: '3.8'
 services: 
   rtbot:
     build: .
+    stdin_open: true
+    tty: true
 
     
