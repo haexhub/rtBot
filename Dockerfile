@@ -1,4 +1,4 @@
-FROM python:3.8
+FROM python:3
 
 # RUN useradd -ms /bin/bash docker
 # ENV VIRTUAL_ENV=/opt/venv
@@ -6,12 +6,13 @@ FROM python:3.8
 
 WORKDIR /usr/src/app
 
-COPY requirements.txt .
+COPY . .
 
 # RUN chown docker /usr/src/app 
 
 # USER docker
 RUN pip install -r requirements.txt
 
-COPY . .
-CMD ["python3", "./rtBot.py"]
+#COPY . .
+ENTRYPOINT [ "python3" ]
+CMD ["rtBot.py"]
